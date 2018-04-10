@@ -1,8 +1,10 @@
 from math import exp
+from math import log
 from mxnet import gluon
 from mxnet import autograd
 from mxnet import nd
 from mxnet import image
+from mxnet import ndarray as nd
 from mxnet.gluon import nn
 import mxnet as mx
 import numpy as np
@@ -91,6 +93,14 @@ def try_all_gpus():
 def SGD(params, lr):
     for param in params:
         param[:] = param - lr * param.grad
+
+def Noisy_SGD(params, lr, clipping_norm, eps, delta, ctx):
+    grad_clipping(params, clipping_norm, ctx)
+    s = 2 * clipping_norm
+    for param in params:
+        noise_scale = ((2 * s * s * log(1.25 / delta)) / (eps * eps))
+        p = nd.random.normal(0, noise_scale, shape=param.shape)
+        param[:] = param - lr * (param.grad + p)
 
 def accuracy(output, label):
     return nd.mean(output.argmax(axis=1)==label).asscalar()
@@ -359,7 +369,7 @@ def data_iter(batch_size, num_examples, random, X, y):
 
 
 def linreg(X, w, b):
-    """线性回归模型。"""
+    """linear regression"""
     return nd.dot(X, w) + b
 
 
